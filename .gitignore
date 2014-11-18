@@ -38,3 +38,6 @@ node_modules
 
 ### PhPStorm ###
 .idea/
+
+# Database file
+server/chats.json

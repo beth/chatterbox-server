@@ -17,8 +17,11 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
-var data = {};
-data.results = [];
+var filename = "chats.json";
+var data;
+fs.readFile(filename, function (err, tempData) {
+  data = JSON.parse(tempData);
+});
 
 var getClasses = function(url){
   var subUrl = url.split('/')[2];
@@ -29,6 +32,7 @@ var getClasses = function(url){
 var postRequest = function(request, response){
   request.on('data',function(buffer){
     data.results.push(JSON.parse(buffer.toString()));
+    fs.writeFile(filename, JSON.stringify(data), function (err) {})
   });
   return {
     statusCode: 201
@@ -69,18 +73,7 @@ var requestHandler = function(request, response) {
 
 
   if (request.url === '/' && request.method === "GET") {
-    var pathName = path.join(process.cwd(), '../client/index.html');
-    var contentType = 'text/html';
-    fs.readFile(pathName, function (err, file) { // encoding
-      if (err) {
-        console.log(err);
-      }
-      var headers = {};
-      headers['Content-Type'] = 'text/html';
-      response.writeHead(200, headers);
-      response.end(file);
-    });
-    return;
+    request.url = '/index.html';
   }
 
   if(contentTypes.hasOwnProperty(path.extname(request.url))){
@@ -109,10 +102,6 @@ var requestHandler = function(request, response) {
     classes: getClasses,
     log: getClasses
   };
-
-  // var postRoutes = {
-  //   send: postSend
-  // }
 
   var urlRoot = request.url.split('/')[1];
 

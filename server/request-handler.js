@@ -14,7 +14,9 @@ this file and include it in basic-server.js so that it actually works.
 var data = {};
 data.results = [];
 
-var getData = function(request, response){
+var getClasses = function(url){
+  var subUrl = url.split('/')[2];
+
   return JSON.stringify(data);
 };
 
@@ -57,19 +59,20 @@ var requestHandler = function(request, response) {
 
   var getRoutes = {
     classes: getClasses,
-    log: getLog
+    log: getClasses
   };
 
-  var postRoutes = {
-    send: postSend
-  }
+  // var postRoutes = {
+  //   send: postSend
+  // }
 
   var urlRoot = request.url.split('/')[1];
 
 
   if (request.method === "GET"){
     if (getRoutes.hasOwnProperty(urlRoot)) {
-      getRoutes[urlRoot](request.url);
+      var statusCode = 200;
+      data = getRoutes[urlRoot](request.url);
     } else {
       var statusCode = 404;
     }

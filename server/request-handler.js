@@ -1,3 +1,9 @@
+var http = require("http"),
+  url = require("url"),
+  path = require("path"),
+  fs = require("fs");
+
+
 /*************************************************************
 
 You should implement your request handler function in this file.
@@ -45,13 +51,55 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+  request.url = request.url.split('?')[0];
   console.log("Serving request type " + request.method + " for url " + request.url);
   // request.on('data', function (buffer) {
   //   console.log(buffer.toString('utf-8'))
   // });
-  console.log(request.url.split('/')[1]);
+
+
+
+  var contentTypes = {
+    '.html': "text/html",
+    '.css':  "text/css",
+    '.js':   "text/javascript",
+    '.map': "application/json",
+    '.gif': "image/gif"
+  };
+
+
+  if (request.url === '/' && request.method === "GET") {
+    var pathName = path.join(process.cwd(), '../client/index.html');
+    var contentType = 'text/html';
+    fs.readFile(pathName, function (err, file) { // encoding
+      if (err) {
+        console.log(err);
+      }
+      var headers = {};
+      headers['Content-Type'] = 'text/html';
+      response.writeHead(200, headers);
+      response.end(file);
+    });
+    return;
+  }
+
+  if(contentTypes.hasOwnProperty(path.extname(request.url))){
+    var pathName = path.join(process.cwd(),'../client',request.url);
+    var contentType = contentTypes[path.extname(request.url)];
+    fs.readFile(pathName, function(err,file){
+      if(err){
+        console.log(err);
+      }
+      var headers = {};
+      headers['Content-Type'] = contentType;
+      response.writeHead(200, headers);
+      response.end(file);
+    });
+    return;
+  }
 
   var data = "";
+  // GET / -> index.html
   // GET /log
   // GET /classes/messages
   // POST /send
@@ -79,6 +127,8 @@ var requestHandler = function(request, response) {
   } else if(request.method === "POST"){
     var statusCode = 201;
     postRequest(request, response);
+  } else if(request.method === "OPTIONS"){
+    var statusCode = 200;
   } else {
     var statusCode = 404;
   }
@@ -118,6 +168,7 @@ var requestHandler = function(request, response) {
 var defaultCorsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Allow": "GET, POST, PUT, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type, accept",
   "access-control-max-age": 10 // Seconds.
 };

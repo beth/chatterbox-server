@@ -11,6 +11,22 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var data = {};
+data.results = [];
+
+var getData = function(request, response){
+  return JSON.stringify(data);
+};
+
+var postRequest = function(request, response){
+  request.on('data',function(buffer){
+    data.results.push(JSON.parse(buffer.toString()));
+  });
+  return {
+    statusCode: 201
+  }
+};
+
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -28,9 +44,41 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log("Serving request type " + request.method + " for url " + request.url);
+  // request.on('data', function (buffer) {
+  //   console.log(buffer.toString('utf-8'))
+  // });
+  console.log(request.url.split('/')[1]);
 
-  // The outgoing status.
-  var statusCode = 200;
+  var data = "";
+  // GET /log
+  // GET /classes/messages
+  // POST /send
+  // GET /classes/room
+
+  var getRoutes = {
+    classes: getClasses,
+    log: getLog
+  };
+
+  var postRoutes = {
+    send: postSend
+  }
+
+  var urlRoot = request.url.split('/')[1];
+
+
+  if (request.method === "GET"){
+    if (getRoutes.hasOwnProperty(urlRoot)) {
+      getRoutes[urlRoot](request.url);
+    } else {
+      var statusCode = 404;
+    }
+  } else if(request.method === "POST"){
+    var statusCode = 201;
+    postRequest(request, response);
+  } else {
+    var statusCode = 404;
+  }
 
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
@@ -52,7 +100,7 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end("Hello, World!");
+  response.end(data);
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -71,3 +119,4 @@ var defaultCorsHeaders = {
   "access-control-max-age": 10 // Seconds.
 };
 
+exports.requestHandler = requestHandler;
